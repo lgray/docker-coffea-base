@@ -8,11 +8,9 @@ RUN conda install --yes --freeze-installed -c conda-forge conda-build python==3.
      && conda clean --all -f -y \
      && conda build purge-all
 
-ARG FASTJET_VERSION=3.3.4.0rc4
+ARG FASTJET_MIN_VERSION=3.3.4.0rc5
 
-RUN git clone https://github.com/scikit-hep/fastjet.git -b v$FASTJET_VERSION --recursive \
-     && cd fastjet \
-     && pip install . -vv
+RUN pip install "fastjet>=$FASTJET_MIN_VERSION" -v
 
 RUN mkdir -p /artifacts \
     && cp -rp $(python -c 'import fastjet; import pathlib; print(pathlib.Path(fastjet.__file__).parent)')* /artifacts \
