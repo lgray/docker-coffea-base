@@ -44,7 +44,8 @@ RUN conda install --yes --freeze-installed \
      && pip install vector \
      && pip cache purge
 
-COPY --from=builder /artifacts $(python -c 'import site; print(site.getsitepackages()[0])')
+# This is very delicate but it keeps the image size reasonable...
+COPY --from=builder /artifacts /opt/conda/lib/python3.8/site-packages
 
 # Make a symbolic link between installation /opt/conda/etc/grid-security and actual directory /etc/grid-security
 RUN ln -s /opt/conda/etc/grid-security /etc/grid-security
