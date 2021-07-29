@@ -17,7 +17,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        IMAGE_DIR: [base, base-cc7, fastjet]
+        IMAGE_DIR: [base, base-cc7]
     name: ${{ matrix.IMAGE_DIR }}
     runs-on: ubuntu-latest
     steps:
@@ -26,23 +26,29 @@ jobs:
 
     - name: Build Image
       run: |
-        if [ "${{ matrix.IMAGE_DIR }}" != 'fastjet' ]; then
-          IMAGE=coffea-${{ matrix.IMAGE_DIR }}
-          echo "IMAGE=${IMAGE}" >> $GITHUB_ENV
+        IMAGE=coffea-${{ matrix.IMAGE_DIR }}
+        echo "IMAGE=${IMAGE}" >> $GITHUB_ENV
 
-          cd ${{ matrix.IMAGE_DIR }}
-          docker build -t ${DOCKER_ORG}/${IMAGE}:PR .
-	else
-          IMAGE=coffea-base
-          echo "IMAGE=${IMAGE}" >> $GITHUB_ENV
+        pushd ${{ matrix.IMAGE_DIR }}
 
-          cd ${{ matrix.IMAGE_DIR }}
-          docker build -t ${DOCKER_ORG}/${IMAGE}:${{ matrix.IMAGE_DIR }}-PR .
-        fi
+        # take care of default image first
+        docker build -f Dockerfile -t ${DOCKER_ORG}/${IMAGE}:PR .
+        # run any specialized builds
+        for spec in $(ls | grep -v Dockerfile)
+	do
+	  docker build -f Dockerfile -t ${DOCKER_ORG}/${IMAGE}:${spec}-PR --build-arg COFFEA_BASE_IMAGE=${DOCKER_ORG}/${IMAGE}:PR .
+	done
+
+	popd	
     - name: Export Full Conda Environment
       run: |
-        if [ "${{ matrix.IMAGE_DIR }}" != 'fastjet' ]; then
-          docker run ${DOCKER_ORG}/${IMAGE}:PR conda list --export
-        else
-          docker run ${DOCKER_ORG}/${IMAGE}:${{ matrix.IMAGE_DIR }}-PR conda list --export
-        fi
+        pushd ${{ matrix.IMAGE_DIR }}
+        # take care of the default image first
+        docker run ${DOCKER_ORG}/${IMAGE}:PR conda list --export
+        for spec in $(ls | grep -v Dockerfile)
+        do
+	  echo specialization: ${spec}
+          docker run ${DOCKER_ORG}/${IMAGE}:${spec}-PR conda list --export
+        done
+
+        popd
