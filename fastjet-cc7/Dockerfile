@@ -15,8 +15,6 @@ RUN conda install --yes --freeze-installed -c conda-forge conda-build python==3.
 
 ARG FASTJET_VERSION=3.3.4.0rc4
 
-RUN python --version
-
 RUN git clone https://github.com/scikit-hep/fastjet.git -b v$FASTJET_VERSION --recursive \
      && cd fastjet \
      && pip install . -vv
@@ -54,7 +52,8 @@ RUN conda install --yes --freeze-installed \
      && pip install vector \
      && pip cache purge
 
-COPY --from=builder /artifacts $(python -c 'import site; print(site.getsitepackages()[0])')
+# This is very delicate but it keeps the image size reasonable...
+COPY --from=builder /artifacts /usr/local/lib/python3.8/site-packages
 
 # Make a symbolic link between installation /opt/conda/etc/grid-security and actual directory /etc/grid-security
 RUN ln -s /opt/conda/etc/grid-security /etc/grid-security

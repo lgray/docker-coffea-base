@@ -10,8 +10,6 @@ RUN conda install --yes --freeze-installed -c conda-forge conda-build python==3.
 
 ARG FASTJET_VERSION=3.3.4.0rc4
 
-RUN python --version
-
 RUN git clone https://github.com/scikit-hep/fastjet.git -b v$FASTJET_VERSION --recursive \
      && cd fastjet \
      && pip install . -vv
